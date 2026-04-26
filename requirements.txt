@@ -1,0 +1,21 @@
+# ──────────────────────────────────────────────────────────────────────────
+#  Surgical Tool Tracking — Python dependencies
+#  Install with:  pip install -r requirements.txt
+# ──────────────────────────────────────────────────────────────────────────
+
+# Computer vision & display
+opencv-python>=4.8.0
+
+# YOLOv8 detection (also installs torch, torchvision, numpy, Pillow, etc.)
+ultralytics>=8.0.0
+
+# Multi-object tracking (DeepSORT)
+deep-sort-realtime>=1.3.2
+
+# Config parsing
+PyYAML>=6.0
+
+# Core scientific stack (ultralytics already pulls these; listed for clarity)
+numpy>=1.24.0
+torch>=2.0.0
+torchvision>=0.15.0

@@ -1,0 +1,56 @@
+# ============================================================
+#  Surgical Tool Tracking System — Configuration
+# ============================================================
+
+model:
+  path: "yolov8n.pt"        # Auto-downloaded on first run if not present
+  confidence: 0.45           # Detection confidence threshold (0.0–1.0)
+  device: "cpu"              # "cpu" | "cuda" | "mps" (Apple Silicon)
+
+video:
+  source: 0                  # 0 = default webcam; or path e.g. "surgery_clip.mp4"
+  width: 1280
+  height: 1080
+  fps_limit: 30
+
+# --------------- Danger Zone Definitions ---------------
+# Each zone is a rectangle defined by [x1, y1, x2, y2] in pixels.
+# Tune coordinates to match your actual frame resolution.
+danger_zones:
+  - name: "Critical Zone A"
+    coordinates: [25, 25, 420, 370]      # top-left quadrant
+    color: [0, 0, 255]                    # BGR Red
+
+  - name: "Restricted Zone B"
+    coordinates: [620, 160, 980, 460]    # right-center area
+    color: [0, 80, 255]                   # BGR Orange-Red
+
+# --------------- Detection Settings ---------------
+surgical_tools:
+  simulate: true    # true  → label ALL detections as surgical tools (demo mode)
+                    # false → only detect classes listed below
+  classes:          # COCO class IDs used when simulate: false
+    - 76            # scissors
+    - 39            # bottle  (proxy)
+    - 41            # cup     (proxy)
+    - 67            # cell phone (proxy)
+
+# --------------- DeepSORT Tracking ---------------
+tracking:
+  max_age: 30               # Frames a track survives without a matching detection
+  n_init: 3                 # Detections needed before a track is confirmed
+  max_iou_distance: 0.7
+  max_cosine_distance: 0.3
+  nn_budget: 100
+
+# --------------- Alert Settings ---------------
+alerts:
+  console_log: true         # Print alerts to terminal
+  danger_text: "DANGER!"    # Text shown in the alert banner
+  overlap_threshold: 0.0    # 0.0 = any pixel overlap triggers; 0.3 = 30% overlap
+  sound: false              # Beep on alert (Windows built-in; no extra deps)
+
+# --------------- Display Settings ---------------
+display:
+  show_fps: true
+  window_title: "Surgical Tool Tracking System"
