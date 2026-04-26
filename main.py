@@ -133,6 +133,14 @@ def main() -> None:
     print(f"\n[INFO] Video source opened — resolution: {actual_w}×{actual_h}")
     print("[INFO] Press  P  to pause/resume   |   Q  to quit\n")
 
+    # ── Create a resizable window fixed to display dimensions ─────────────
+    disp_cfg = config.get("display", {})
+    disp_w   = int(disp_cfg.get("window_width",  1280))
+    disp_h   = int(disp_cfg.get("window_height",  720))
+
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_title, disp_w, disp_h)
+
     # ── Main loop ─────────────────────────────────────────────────────────
     paused = False
     frame  = None     # keep last frame so 'pause' still shows something
@@ -176,7 +184,9 @@ def main() -> None:
 
         # Always show something (paused or live)
         if frame is not None:
-            cv2.imshow(window_title, frame)
+            # Scale to display size so the full frame fits without clipping
+            display_frame = cv2.resize(frame, (disp_w, disp_h), interpolation=cv2.INTER_LINEAR)
+            cv2.imshow(window_title, display_frame)
 
         # ── Key handling ──────────────────────────────────────────────────
         key = cv2.waitKey(1) & 0xFF

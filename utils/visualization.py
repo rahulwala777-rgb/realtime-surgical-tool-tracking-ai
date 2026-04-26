@@ -16,6 +16,7 @@ Drawing layers (back → front)
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import List, Tuple
 
@@ -138,7 +139,7 @@ class Visualizer:
 
         # Label
         conf_str  = f" {track.confidence:.2f}" if track.confidence > 0 else ""
-        danger_tag = "  ⚠ DANGER" if in_danger else ""
+        danger_tag = "  [!] DANGER" if in_danger else ""
         label = f"ID:{track.track_id}  {track.class_name}{conf_str}{danger_tag}"
         self._label_pill(frame, label, (x1, y1 - 2), color, scale=0.48)
 
@@ -155,9 +156,13 @@ class Visualizer:
         bg_color   = (0, 0, 220) if flash else (0, 0, 160)
         txt_color  = (255, 255, 255) if flash else (255, 210, 210)
 
-        tool_ids   = sorted({a.track_id for a in alerts})
-        zone_names = sorted({a.zone_name for a in alerts})
-        msg = f"  !! {self._alert_text}  Tool(s) {tool_ids} in zone(s) {zone_names}  !!"
+        tool_ids_str  = str(sorted({a.track_id for a in alerts}))
+        zone_names_str = ", ".join(sorted({a.zone_name for a in alerts}))
+        # Use only ASCII chars — OpenCV Hershey fonts don't support Unicode
+        alert_text = self._alert_text.encode("ascii", errors="replace").decode("ascii")
+        msg = "  !! {}  Tool(s) {} in zone(s) {}  !!".format(
+            alert_text, tool_ids_str, zone_names_str
+        )
 
         banner_h = 46
         cv2.rectangle(frame, (0, h - banner_h), (w, h), bg_color, -1)
@@ -222,15 +227,22 @@ class Visualizer:
                     self._font, scale, (255, 255, 255), 1, cv2.LINE_AA)
 
     def _maybe_beep(self) -> None:
-        """Emit a system beep at most once per second (Windows only)."""
+        """Fire 3 loud beeps in a background thread — at most once per 1.5 s."""
         if not self._sound:
             return
         now = time.time()
-        if now - self._last_sound < 1.0:
+        if now - self._last_sound < 1.5:
             return
         self._last_sound = now
+        threading.Thread(target=self._beep_worker, daemon=True).start()
+
+    @staticmethod
+    def _beep_worker() -> None:
+        """Play 3 rapid high-pitch beeps (Windows winsound — no extra packages)."""
         try:
             import winsound
-            winsound.Beep(880, 120)   # 880 Hz, 120 ms
+            for _ in range(3):
+                winsound.Beep(1200, 180)   # 1200 Hz, 180 ms — clearly audible
+                time.sleep(0.08)            # 80 ms gap between beeps
         except Exception:
-            pass                      # Non-Windows or unavailable — silently skip
+            pass   # Non-Windows: silently skip

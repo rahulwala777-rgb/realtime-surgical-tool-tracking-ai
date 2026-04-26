@@ -10,12 +10,18 @@ DeepSORT output → list of Track objects with .track_id and .to_ltrb()
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import numpy as np
 
 from detection.detector import Detection
+
+# deep_sort_realtime uses %-style logging internally; some versions have a
+# format-string bug (too many args) that propagates as TypeError.
+# Raising to ERROR suppresses those debug/info messages entirely.
+logging.getLogger("deep_sort_realtime").setLevel(logging.ERROR)
 
 
 # ---------------------------------------------------------------------------

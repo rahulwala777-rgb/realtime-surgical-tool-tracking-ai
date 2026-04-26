@@ -63,8 +63,10 @@ class SurgicalToolDetector:
         self.model_path   = self._cfg_model["path"]
         self.confidence   = float(self._cfg_model["confidence"])
         self.device       = str(self._cfg_model.get("device", "cpu"))
-        self.simulate     = bool(self._cfg_tools.get("simulate", True))
-        self.tool_classes = set(self._cfg_tools.get("classes", list(self._COCO_PROXY.keys())))
+        self.simulate       = bool(self._cfg_tools.get("simulate", True))
+        self.tool_classes   = set(self._cfg_tools.get("classes", list(self._COCO_PROXY.keys())))
+        # Classes skipped even in simulate mode (e.g. 0 = person for pen-demo)
+        self.exclude_classes = set(self._cfg_tools.get("exclude_classes", []))
 
         print(f"[Detector] Loading model '{self.model_path}' on device='{self.device}' ...")
         self.model = YOLO(self.model_path)
@@ -97,7 +99,11 @@ class SurgicalToolDetector:
                 class_id   = int(box.cls[0].item())
                 confidence = float(box.conf[0].item())
 
-                # Class filter (only active when simulate=False)
+                # Always skip excluded classes (e.g. person=0 for pen demo)
+                if class_id in self.exclude_classes:
+                    continue
+
+                # In non-simulate mode keep only configured tool classes
                 if not self.simulate and class_id not in self.tool_classes:
                     continue
 
